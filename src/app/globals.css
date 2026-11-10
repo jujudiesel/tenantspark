@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #0e1730;
+  --color-navy-2: #16213f;
+  --color-navy-3: #1b2a52;
+  --color-spark: #1492ff;
+  --color-link: #0b6fd6;
+  --color-link-dark: #084f9c;
+  --color-ink: #0e1730;
+  --color-ink-2: #3d4760;
+  --color-muted: #5b6477;
+  --color-line: #e3e8f0;
+  --color-line-2: #eef1f6;
+  --color-field: #c9d1e0;
+  --color-field-strong: #8792a8;
+  --color-page: #f4f6fa;
+  --color-amber: #ffae3d;
+  --color-amber-bg: #fff0de;
+  --color-amber-ink: #8a4300;
+  --color-blue-bg: #e3f1ff;
+  --color-blue-ink: #0a4f96;
+  --color-red-bg: #fde8e8;
+  --color-red-ink: #8f1d1d;
+  --color-green-bg: #e3f7ec;
+  --color-green-ink: #156337;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-kanit), var(--font-inter), sans-serif;
+  --font-wordmark: var(--font-kanit-italic), "Arial Black", sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
