@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAccount } from "@/lib/data";
-import { Button, Card, PageHeader, Pill, fmtDate, money } from "@/components/ui";
-import { deleteTenant } from "../actions";
+import { Button, Card, Notice, PageHeader, Pill, fmtDate, money } from "@/components/ui";
+import { CopyButton } from "@/components/copy-button";
+import { inviteUrl } from "@/lib/site";
+import { createInvite, deleteTenant } from "../actions";
 
-export default async function TenantPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TenantPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ invite?: string }>;
+}) {
   const { id } = await params;
+  const { invite } = await searchParams;
   const { supabase, account } = await requireAccount();
   const { data: tenant } = await supabase
     .from("tenants")
@@ -60,8 +69,43 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
               <dd>{tenant.user_id ? <Pill tone="blue">Signed up</Pill> : <Pill tone="gray">Not invited yet</Pill>}</dd>
             </div>
           </dl>
-          {!tenant.user_id ? (
-            <p className="text-[13px] text-muted">Portal invites turn on with rent collection in the next update.</p>
+          {!tenant.user_id && !active ? (
+            <p className="text-[13px] text-muted">Put this tenant on a lease first, then invite them to the portal.</p>
+          ) : null}
+          {!tenant.user_id && active && !tenant.invited_at ? (
+            <form action={createInvite}>
+              <input type="hidden" name="id" value={tenant.id} />
+              <Button type="submit" variant="secondary">Invite to tenant portal</Button>
+            </form>
+          ) : null}
+          {!tenant.user_id && active && tenant.invited_at && tenant.invite_token ? (
+            <div className="flex flex-col gap-3 p-4 rounded-[10px] bg-page">
+              {invite ? <Notice tone="success">Invite ready. Send the link below.</Notice> : null}
+              <p className="text-sm text-ink-2">
+                Text or email this link to {tenant.full_name.split(" ")[0]}. They&apos;ll create a login and see their lease.
+              </p>
+              <code className="block text-[13px] break-all px-3 py-2.5 rounded-lg bg-white border border-line">{inviteUrl(tenant.invite_token)}</code>
+              <div className="flex flex-wrap gap-2">
+                <CopyButton text={inviteUrl(tenant.invite_token)} />
+                {tenant.email ? (
+                  <a
+                    href={`mailto:${tenant.email}?subject=${encodeURIComponent("Your tenant portal login")}&body=${encodeURIComponent(`Hi ${tenant.full_name.split(" ")[0]},\n\nHere's your link to set up your tenant portal. You can see your lease, what's due, and send repair requests there.\n\n${inviteUrl(tenant.invite_token)}\n\nThanks`)}`}
+                    className="inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-sm font-semibold bg-white text-ink border border-field hover:bg-page"
+                  >
+                    Email it
+                  </a>
+                ) : null}
+                {tenant.phone ? (
+                  <a
+                    href={`sms:${tenant.phone.replace(/[^0-9+]/g, "")}?&body=${encodeURIComponent(`Here's your tenant portal link: ${inviteUrl(tenant.invite_token)}`)}`}
+                    className="inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-sm font-semibold bg-white text-ink border border-field hover:bg-page"
+                  >
+                    Text it
+                  </a>
+                ) : null}
+              </div>
+              <p className="text-[13px] text-muted">Invited {fmtDate(tenant.invited_at.slice(0, 10))}. The link stops working once they sign up.</p>
+            </div>
           ) : null}
         </Card>
 

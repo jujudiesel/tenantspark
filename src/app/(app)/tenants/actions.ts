@@ -56,3 +56,19 @@ export async function deleteTenant(formData: FormData) {
   revalidatePath("/tenants");
   redirect("/tenants");
 }
+
+/** Makes sure the tenant has an invite token (regenerating a used/expired one is not allowed once they've signed up). */
+export async function createInvite(formData: FormData) {
+  const { supabase, account } = await requireAccount();
+  const id = String(formData.get("id"));
+  const { data: tenant } = await supabase.from("tenants").select("id, user_id, invite_token").eq("id", id).eq("account_id", account.id).maybeSingle();
+  if (!tenant) redirect("/tenants");
+  if (tenant.user_id) redirect(`/tenants/${id}`);
+  if (!tenant.invite_token) {
+    await supabase.from("tenants").update({ invite_token: crypto.randomUUID(), invited_at: new Date().toISOString() }).eq("id", id);
+  } else {
+    await supabase.from("tenants").update({ invited_at: new Date().toISOString() }).eq("id", id);
+  }
+  revalidatePath(`/tenants/${id}`);
+  redirect(`/tenants/${id}?invite=1`);
+}

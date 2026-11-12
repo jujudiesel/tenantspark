@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAccount } from "@/lib/data";
 import { Button, Field, Notice, PageHeader, Textarea } from "@/components/ui";
 import { createLease } from "../actions";
@@ -34,9 +35,9 @@ export default async function NewLeasePage({
         <PageHeader title="New lease" />
         <Notice>
           You need at least one unit and one tenant before you can set up a lease.{" "}
-          {unitRows.length === 0 ? <a href="/properties/new" className="font-semibold text-link">Add a property</a> : null}
+          {unitRows.length === 0 ? <Link href="/properties/new" className="font-semibold text-link">Add a property</Link> : null}
           {unitRows.length === 0 && (tenants?.length ?? 0) === 0 ? " and " : null}
-          {(tenants?.length ?? 0) === 0 ? <a href="/tenants/new" className="font-semibold text-link">add a tenant</a> : null}.
+          {(tenants?.length ?? 0) === 0 ? <Link href="/tenants/new" className="font-semibold text-link">add a tenant</Link> : null}.
         </Notice>
       </>
     );
@@ -89,7 +90,7 @@ export default async function NewLeasePage({
               </label>
             ))}
           </div>
-          <a href={`/tenants/new${unitParam ? `?unit=${unitParam}` : ""}`} className="text-sm font-semibold text-link self-start mt-1">Add a new tenant</a>
+          <Link href={`/tenants/new${unitParam ? `?unit=${unitParam}` : ""}`} className="text-sm font-semibold text-link self-start mt-1">Add a new tenant</Link>
         </fieldset>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
