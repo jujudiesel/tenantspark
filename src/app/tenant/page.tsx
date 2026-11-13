@@ -19,10 +19,18 @@ export default async function TenantHome() {
   }
 
   const active = leases.find((l) => l.status === "active");
-  const { data: toSign } = active
-    ? await supabase.from("lease_documents").select("id, title").eq("lease_id", active.id).eq("status", "sent")
-    : { data: [] as { id: string; title: string }[] };
+  const [{ data: toSign }, { data: openCharges }, { data: settings }] = active
+    ? await Promise.all([
+        supabase.from("lease_documents").select("id, title").eq("lease_id", active.id).eq("status", "sent"),
+        supabase.from("rent_charges").select("id, due_date, amount_cents, late_fee_cents, paid_cents, description, payments(status)").eq("lease_id", active.id).in("status", ["due", "partial"]).order("due_date").limit(1),
+        supabase.from("payment_settings").select("charges_enabled").eq("account_id", tenant.account_id).maybeSingle(),
+      ])
+    : [{ data: [] as { id: string; title: string }[] }, { data: [] }, { data: null }];
 
+  const nextCharge = openCharges?.[0];
+  const owed = nextCharge ? nextCharge.amount_cents + nextCharge.late_fee_cents - nextCharge.paid_cents : 0;
+  const processing = nextCharge ? ((nextCharge.payments as unknown as { status: string }[]) ?? []).some((p) => p.status === "pending") : false;
+  const online = Boolean(settings?.charges_enabled);
   const due = active ? nextDueDate(active.rent_due_day) : null;
   const first = tenant.full_name.split(" ")[0];
 
@@ -50,14 +58,24 @@ export default async function TenantHome() {
       {active ? (
         <section className="bg-navy rounded-[18px] p-6 flex flex-col gap-4 text-white">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-[#C3CBDD]">Monthly rent</span>
-            <span className="font-display font-semibold text-[46px] leading-none tabular">{moneyExact(active.rent_cents)}</span>
-            <span className="text-sm text-[#C3CBDD]">Due {due!.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span>
+            <span className="text-sm font-medium text-[#C3CBDD]">{nextCharge ? nextCharge.description : "Monthly rent"}</span>
+            <span className="font-display font-semibold text-[46px] leading-none tabular">{moneyExact(nextCharge ? owed : active.rent_cents)}</span>
+            <span className="text-sm text-[#C3CBDD]">
+              {nextCharge ? `Due ${fmtDate(nextCharge.due_date)}` : `Next due ${due!.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}`}
+            </span>
           </div>
-          <div className="flex flex-col gap-2 p-4 rounded-[10px] bg-navy-2 text-sm text-[#DCE2EE]">
-            <span className="font-semibold text-white">Paying rent online is coming soon</span>
-            <span>Until then, pay {landlord ?? "your landlord"} the way you do now.</span>
-          </div>
+          {nextCharge && online && !processing ? (
+            <Link href="/tenant/pay" className="min-h-[50px] inline-flex items-center justify-center rounded-[10px] bg-spark text-navy text-base font-bold">Pay rent</Link>
+          ) : processing ? (
+            <div className="p-4 rounded-[10px] bg-navy-2 text-sm text-[#DCE2EE]"><span className="font-semibold text-white">Payment processing.</span> Bank transfers take 2 to 4 business days.</div>
+          ) : !online ? (
+            <div className="flex flex-col gap-2 p-4 rounded-[10px] bg-navy-2 text-sm text-[#DCE2EE]">
+              <span className="font-semibold text-white">Online payments aren&apos;t set up yet</span>
+              <span>Pay {landlord ?? "your landlord"} the way you do now.</span>
+            </div>
+          ) : (
+            <div className="p-4 rounded-[10px] bg-navy-2 text-sm text-[#DCE2EE]">Nothing due right now.</div>
+          )}
         </section>
       ) : (
         <Card className="p-6 flex flex-col gap-2">
