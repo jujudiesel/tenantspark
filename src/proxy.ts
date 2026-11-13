@@ -25,10 +25,9 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  // Refreshes the session cookie if it is about to expire. Do not remove.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verifies the session locally (no network call) and refreshes the cookie when needed.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const path = request.nextUrl.pathname;
   const isProtected = PROTECTED.some((p) => path === p || path.startsWith(p + "/"));

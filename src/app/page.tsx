@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BoltBadge, Wordmark } from "@/components/logo";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/data";
 
 const features = [
   {
@@ -32,10 +32,7 @@ const steps = [
 ];
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   return (
     <div className="bg-white text-ink">

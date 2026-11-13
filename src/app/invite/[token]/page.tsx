@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BoltBadge, Wordmark } from "@/components/logo";
 import { Button, Field, Notice } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/data";
 import { acceptInvite, tenantSignUp } from "./actions";
 
 export const metadata = { title: "Set up your tenant portal" };
@@ -24,9 +25,7 @@ export default async function InvitePage({
   const { data: preview } = valid
     ? ((await supabase.rpc("invite_preview", { token }).maybeSingle()) as { data: Preview | null })
     : { data: null as Preview | null };
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   return (
     <div className="min-h-screen bg-page flex flex-col items-center p-6 gap-8">

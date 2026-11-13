@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/data";
 
@@ -17,7 +18,7 @@ export type TenantLease = {
 };
 
 /** The signed-in user's tenant records and leases. Landlords get sent to their dashboard. */
-export async function requireTenant() {
+export const requireTenant = cache(async () => {
   const { supabase, user } = await requireUser();
 
   const { data: tenants } = await supabase
@@ -39,7 +40,7 @@ export async function requireTenant() {
   const landlord = (tenant.accounts as unknown as { name: string } | null)?.name ?? null;
 
   return { supabase, user, tenant, leases, landlord };
-}
+});
 
 export function nextDueDate(dueDay: number, from = new Date()) {
   const y = from.getFullYear();

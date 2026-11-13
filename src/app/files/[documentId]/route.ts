@@ -1,14 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/data";
 
 // Streams a lease PDF to whoever is allowed to see it (row level security decides).
 // ?signed=1 returns the signed copy when there is one.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ documentId: string }> }) {
   const { documentId } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) return NextResponse.redirect(new URL("/login", request.url));
 
   const { data: doc } = await supabase
