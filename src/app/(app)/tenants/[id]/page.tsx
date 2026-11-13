@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireAccount } from "@/lib/data";
 import { Button, Card, Notice, PageHeader, Pill, fmtDate, money } from "@/components/ui";
 import { CopyButton } from "@/components/copy-button";
-import { inviteUrl } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
 import { createInvite, deleteTenant } from "../actions";
 
 export default async function TenantPage({
@@ -15,6 +15,7 @@ export default async function TenantPage({
 }) {
   const { id } = await params;
   const { invite } = await searchParams;
+  const base = await siteUrl();
   const { supabase, account } = await requireAccount();
   const { data: tenant } = await supabase
     .from("tenants")
@@ -84,12 +85,12 @@ export default async function TenantPage({
               <p className="text-sm text-ink-2">
                 Text or email this link to {tenant.full_name.split(" ")[0]}. They&apos;ll create a login and see their lease.
               </p>
-              <code className="block text-[13px] break-all px-3 py-2.5 rounded-lg bg-white border border-line">{inviteUrl(tenant.invite_token)}</code>
+              <code className="block text-[13px] break-all px-3 py-2.5 rounded-lg bg-white border border-line">{`${base}/invite/${tenant.invite_token}`}</code>
               <div className="flex flex-wrap gap-2">
-                <CopyButton text={inviteUrl(tenant.invite_token)} />
+                <CopyButton text={`${base}/invite/${tenant.invite_token}`} />
                 {tenant.email ? (
                   <a
-                    href={`mailto:${tenant.email}?subject=${encodeURIComponent("Your tenant portal login")}&body=${encodeURIComponent(`Hi ${tenant.full_name.split(" ")[0]},\n\nHere's your link to set up your tenant portal. You can see your lease, what's due, and send repair requests there.\n\n${inviteUrl(tenant.invite_token)}\n\nThanks`)}`}
+                    href={`mailto:${tenant.email}?subject=${encodeURIComponent("Your tenant portal login")}&body=${encodeURIComponent(`Hi ${tenant.full_name.split(" ")[0]},\n\nHere's your link to set up your tenant portal. You can see your lease, what's due, and send repair requests there.\n\n${`${base}/invite/${tenant.invite_token}`}\n\nThanks`)}`}
                     className="inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-sm font-semibold bg-white text-ink border border-field hover:bg-page"
                   >
                     Email it
@@ -97,7 +98,7 @@ export default async function TenantPage({
                 ) : null}
                 {tenant.phone ? (
                   <a
-                    href={`sms:${tenant.phone.replace(/[^0-9+]/g, "")}?&body=${encodeURIComponent(`Here's your tenant portal link: ${inviteUrl(tenant.invite_token)}`)}`}
+                    href={`sms:${tenant.phone.replace(/[^0-9+]/g, "")}?&body=${encodeURIComponent(`Here's your tenant portal link: ${`${base}/invite/${tenant.invite_token}`}`)}`}
                     className="inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-sm font-semibold bg-white text-ink border border-field hover:bg-page"
                   >
                     Text it

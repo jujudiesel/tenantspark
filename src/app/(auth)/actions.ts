@@ -3,10 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { str } from "@/lib/data";
-
-function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-}
+import { siteUrl } from "@/lib/site";
 
 export async function signUp(formData: FormData) {
   const supabase = await createClient();
@@ -24,7 +21,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=/dashboard`,
+      emailRedirectTo: `${await siteUrl()}/auth/callback?next=/dashboard`,
       data: { full_name: fullName, company_name: companyName, unit_count: unitCount, role: "landlord" },
     },
   });
@@ -67,7 +64,7 @@ export async function sendReset(formData: FormData) {
   const email = str(formData.get("email"));
   if (!email) redirect(`/forgot?error=${encodeURIComponent("Enter your email.")}`);
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl()}/auth/callback?next=/reset`,
+    redirectTo: `${await siteUrl()}/auth/callback?next=/reset`,
   });
   redirect(`/forgot?sent=1`);
 }
