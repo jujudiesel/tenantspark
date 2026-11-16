@@ -4,17 +4,17 @@ import { requireAccount } from "@/lib/data";
 import { Button, Card, Notice, PageHeader, Pill, fmtDate, money } from "@/components/ui";
 import { CopyButton } from "@/components/copy-button";
 import { siteUrl } from "@/lib/site";
-import { createInvite, deleteTenant } from "../actions";
+import { createInvite, deleteTenant, sendTenantReset } from "../actions";
 
 export default async function TenantPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ invite?: string }>;
+  searchParams: Promise<{ invite?: string; reset?: string; link?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { invite } = await searchParams;
+  const { invite, reset, link, error } = await searchParams;
   const base = await siteUrl();
   const { supabase, account } = await requireAccount();
   const { data: tenant } = await supabase
@@ -106,6 +106,42 @@ export default async function TenantPage({
                 ) : null}
               </div>
               <p className="text-[13px] text-muted">Invited {fmtDate(tenant.invited_at.slice(0, 10))}. The link stops working once they sign up.</p>
+            </div>
+          ) : null}
+          {tenant.user_id ? (
+            <div className="flex flex-col gap-3">
+              {error ? <Notice tone="error">{error}</Notice> : null}
+              {reset === "email" ? <Notice tone="success">Reset email sent to {tenant.email}. The link in it works for an hour.</Notice> : null}
+              {reset === "link" && link ? (
+                <div className="flex flex-col gap-3 p-4 rounded-[10px] bg-page">
+                  <p className="text-sm text-ink-2">Send {tenant.full_name.split(" ")[0]} this link. It lets them choose a new password and works for one hour.</p>
+                  <code className="block text-[13px] break-all px-3 py-2.5 rounded-lg bg-white border border-line">{link}</code>
+                  <div className="flex flex-wrap gap-2">
+                    <CopyButton text={link} />
+                    {tenant.email ? (
+                      <a
+                        href={`mailto:${tenant.email}?subject=${encodeURIComponent("Reset your tenant portal password")}&body=${encodeURIComponent(`Hi ${tenant.full_name.split(" ")[0]},\n\nUse this link to choose a new password for your tenant portal. It works for one hour.\n\n${link}\n\nThanks`)}`}
+                        className="inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-sm font-semibold bg-white text-ink border border-field hover:bg-page"
+                      >
+                        Email it
+                      </a>
+                    ) : null}
+                    {tenant.phone ? (
+                      <a
+                        href={`sms:${tenant.phone.replace(/[^0-9+]/g, "")}?&body=${encodeURIComponent(`Here's a link to reset your tenant portal password (works for 1 hour): ${link}`)}`}
+                        className="inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-sm font-semibold bg-white text-ink border border-field hover:bg-page"
+                      >
+                        Text it
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+              <form action={sendTenantReset} className="flex flex-wrap items-center gap-3">
+                <input type="hidden" name="id" value={tenant.id} />
+                <Button type="submit" variant="secondary">Send password reset</Button>
+                <span className="text-[13px] text-muted">For when they&apos;re locked out of the portal.</span>
+              </form>
             </div>
           ) : null}
         </Card>

@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAccount, str } from "@/lib/data";
+import { siteUrl } from "@/lib/site";
+import { adminClient } from "@/lib/supabase/admin";
 
 export async function createTenant(formData: FormData) {
   const { supabase, account } = await requireAccount();
@@ -71,4 +73,30 @@ export async function createInvite(formData: FormData) {
   }
   revalidatePath(`/tenants/${id}`);
   redirect(`/tenants/${id}?invite=1`);
+}
+
+/**
+ * Landlord sends a tenant a password reset.
+ * With the admin key set we make a link the landlord can text or email themselves (shown once, good for an hour).
+ * Without it we fall back to Supabase emailing the tenant directly.
+ */
+export async function sendTenantReset(formData: FormData) {
+  const { supabase, account } = await requireAccount();
+  const id = String(formData.get("id"));
+  const back = (q: string) => redirect(`/tenants/${id}?${q}`);
+  const { data: tenant } = await supabase.from("tenants").select("id, email, user_id").eq("id", id).eq("account_id", account.id).maybeSingle();
+  if (!tenant) redirect("/tenants");
+  if (!tenant.user_id || !tenant.email) back(`error=${encodeURIComponent("This tenant hasn't signed up for the portal yet, so there's no password to reset. Send them the invite link instead.")}`);
+
+  const base = await siteUrl();
+  if (process.env.SUPABASE_SECRET_KEY) {
+    const { data, error } = await adminClient().auth.admin.generateLink({ type: "recovery", email: tenant.email! });
+    if (error || !data?.properties?.hashed_token) back(`error=${encodeURIComponent(error?.message ?? "Could not make a reset link.")}`);
+    const link = `${base}/auth/callback?token_hash=${encodeURIComponent(data!.properties!.hashed_token)}&type=recovery&next=/reset`;
+    back(`reset=link&link=${encodeURIComponent(link)}`);
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(tenant.email!, { redirectTo: `${base}/auth/callback?next=/reset` });
+  if (error) back(`error=${encodeURIComponent(error.message)}`);
+  back("reset=email");
 }

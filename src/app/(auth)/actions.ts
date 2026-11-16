@@ -75,5 +75,8 @@ export async function setNewPassword(formData: FormData) {
   if (password.length < 8) redirect(`/reset?error=${encodeURIComponent("Use at least 8 characters.")}`);
   const { error } = await supabase.auth.updateUser({ password });
   if (error) redirect(`/reset?error=${encodeURIComponent(error.message)}`);
-  redirect("/dashboard");
+  // Landlords go to the dashboard; tenants have no account membership and get sent on to the portal.
+  const { data: claims } = await supabase.auth.getClaims();
+  const { data: member } = claims ? await supabase.from("account_members").select("account_id").eq("user_id", claims.claims.sub).limit(1).maybeSingle() : { data: null };
+  redirect(member ? "/dashboard" : "/tenant");
 }
