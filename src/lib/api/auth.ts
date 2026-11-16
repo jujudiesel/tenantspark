@@ -29,11 +29,13 @@ export async function authenticate(request: NextRequest): Promise<ApiContext | N
   if (!match) return apiError(401, "Missing or malformed API key. Send it as: Authorization: Bearer ts_live_...");
 
   const db = adminClient();
-  const { data: key } = await db
+  const { data: key, error } = await db
     .from("api_keys")
     .select("id, account_id, revoked_at")
     .eq("key_hash", hashKey(match[1]))
     .maybeSingle();
+  // A database error here means the server's own key is wrong, not the caller's.
+  if (error) return apiError(503, `The server could not check the key (${error.message}). SUPABASE_SECRET_KEY is probably wrong on the server.`);
   if (!key || key.revoked_at) return apiError(401, "That API key is not valid.");
 
   // Fire and forget. Not worth slowing the request for.

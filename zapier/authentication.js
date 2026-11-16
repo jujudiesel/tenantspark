@@ -33,7 +33,10 @@ const includeApiKey = (request, z, bundle) => {
 // Turn our { error: { message } } shape into a readable Zapier error.
 const handleErrors = (response, z) => {
   if (response.status === 401) {
-    throw new z.errors.RefreshAuthError('That API key is not valid. Make a new one in TenantSpark under Settings, Integrations.');
+    throw new z.errors.Error('That API key is not valid. Make a new one in TenantSpark under Settings, Integrations, and paste the whole thing.', 'AuthenticationError', 401);
+  }
+  if (response.status === 503) {
+    throw new z.errors.Error('TenantSpark is not set up to accept API calls right now. Try again in a few minutes.', 'ServerNotReady', 503);
   }
   if (response.status >= 400) {
     let msg = `TenantSpark returned ${response.status}`;
