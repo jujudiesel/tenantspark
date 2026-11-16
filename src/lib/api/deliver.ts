@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import type { adminClient } from "@/lib/supabase/admin";
 import { EVENT_TYPES, loadObject } from "@/lib/api/objects";
+import { notifyForEvent } from "@/lib/reminders";
 
 type Db = ReturnType<typeof adminClient>;
 
@@ -36,6 +37,15 @@ async function post(url: string, body: string, secret: string, type: string) {
 export async function deliverEvent(db: Db, eventId: string) {
   const { data: event } = await db.from("events").select("id, account_id, type, object_id, created_at").eq("id", eventId).maybeSingle();
   if (!event) return { sent: 0 };
+
+  // Email and text reminders ride on the same events as webhooks. Deduped inside, so retries are safe.
+  try {
+    const payloadForNotify = await buildPayload(db, event);
+    await notifyForEvent(db, event, payloadForNotify);
+  } catch (e) {
+    console.error("notify failed", e);
+  }
+
   const { data: subs } = await db
     .from("webhook_subscriptions")
     .select("id, url, secret, event_type")

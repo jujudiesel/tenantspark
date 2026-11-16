@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { requireAccount, str } from "@/lib/data";
 import { siteUrl } from "@/lib/site";
 import { adminClient } from "@/lib/supabase/admin";
+import { sendInvite } from "@/lib/reminders";
+import { loadSettings } from "@/lib/notify";
 
 export async function createTenant(formData: FormData) {
   const { supabase, account } = await requireAccount();
@@ -63,16 +65,22 @@ export async function deleteTenant(formData: FormData) {
 export async function createInvite(formData: FormData) {
   const { supabase, account } = await requireAccount();
   const id = String(formData.get("id"));
-  const { data: tenant } = await supabase.from("tenants").select("id, user_id, invite_token").eq("id", id).eq("account_id", account.id).maybeSingle();
+  const { data: tenant } = await supabase.from("tenants").select("id, user_id, invite_token, full_name, email, phone").eq("id", id).eq("account_id", account.id).maybeSingle();
   if (!tenant) redirect("/tenants");
   if (tenant.user_id) redirect(`/tenants/${id}`);
-  if (!tenant.invite_token) {
-    await supabase.from("tenants").update({ invite_token: crypto.randomUUID(), invited_at: new Date().toISOString() }).eq("id", id);
-  } else {
-    await supabase.from("tenants").update({ invited_at: new Date().toISOString() }).eq("id", id);
+  const token = tenant.invite_token ?? crypto.randomUUID();
+  await supabase.from("tenants").update({ invite_token: token, invited_at: new Date().toISOString() }).eq("id", id);
+
+  // Email and text the link too, when sending is set up. The link stays on the page either way.
+  let sent: string[] = [];
+  try {
+    const s = await loadSettings(supabase, account.id);
+    sent = await sendInvite(supabase, { accountId: account.id, tenant: { ...tenant }, landlord: account.name, url: `${await siteUrl()}/invite/${token}`, sms: s.sms_enabled });
+  } catch {
+    // never block the invite on email
   }
   revalidatePath(`/tenants/${id}`);
-  redirect(`/tenants/${id}?invite=1`);
+  redirect(`/tenants/${id}?invite=1${sent.some((x) => x.endsWith(":sent")) ? "&emailed=1" : ""}`);
 }
 
 /**

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { stripe, convenienceFee } from "@/lib/stripe";
 import { adminClient } from "@/lib/supabase/admin";
 import { sweepUndelivered } from "@/lib/api/deliver";
+import { runDailyReminders } from "@/lib/reminders";
 
 export const maxDuration = 120;
 
@@ -97,8 +98,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Rent due soon, due today, late, and leases ending.
+  const reminders = await runDailyReminders(db, today);
+
   // Webhooks that never got through (app was down, endpoint timed out) get another try.
   const webhooks = await sweepUndelivered(db);
 
-  return NextResponse.json({ date: today, chargesCreated: created ?? 0, lateFeesApplied: lateFees ?? 0, lateRentEvents: lateEvents ?? 0, autopaid, webhooks, errors });
+  return NextResponse.json({ date: today, chargesCreated: created ?? 0, lateFeesApplied: lateFees ?? 0, lateRentEvents: lateEvents ?? 0, autopaid, reminders, webhooks, errors });
 }

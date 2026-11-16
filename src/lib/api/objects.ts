@@ -193,4 +193,6 @@ export const EVENT_TYPES: Record<string, { object: ObjectType; label: string; de
   "repair.created": { object: "repair", label: "New repair request", description: "A repair request was opened." },
   "repair.updated": { object: "repair", label: "Repair status changed", description: "A repair request moved to a new status." },
   "repair.done": { object: "repair", label: "Repair done", description: "A repair request was marked done or closed." },
+  "repair.note": { object: "repair", label: "Landlord posted a repair update", description: "The landlord posted an update the tenant can see." },
+  "repair.tenant_reply": { object: "repair", label: "Tenant replied on a repair", description: "The tenant added a comment to a repair request." },
 };

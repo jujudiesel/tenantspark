@@ -11,10 +11,10 @@ export default async function TenantPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ invite?: string; reset?: string; link?: string; error?: string }>;
+  searchParams: Promise<{ invite?: string; emailed?: string; reset?: string; link?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { invite, reset, link, error } = await searchParams;
+  const { invite, emailed, reset, link, error } = await searchParams;
   const base = await siteUrl();
   const { supabase, account } = await requireAccount();
   const { data: tenant } = await supabase
@@ -81,7 +81,7 @@ export default async function TenantPage({
           ) : null}
           {!tenant.user_id && active && tenant.invited_at && tenant.invite_token ? (
             <div className="flex flex-col gap-3 p-4 rounded-[10px] bg-page">
-              {invite ? <Notice tone="success">Invite ready. Send the link below.</Notice> : null}
+              {invite ? <Notice tone="success">{emailed ? `Invite sent to ${tenant.email}. The link is below if you want to text it too.` : "Invite ready. Send the link below."}</Notice> : null}
               <p className="text-sm text-ink-2">
                 Text or email this link to {tenant.full_name.split(" ")[0]}. They&apos;ll create a login and see their lease.
               </p>
