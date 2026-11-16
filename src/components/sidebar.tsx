@@ -34,7 +34,6 @@ const items: { href: string; label: string; icon: React.ReactNode; soon?: boolea
   {
     href: "/maintenance",
     label: "Maintenance",
-    soon: true,
     icon: <path d="M14.7 6.3a4 4 0 0 0-5.2 5.2L3 18l3 3 6.5-6.5a4 4 0 0 0 5.2-5.2l-2.6 2.6-2.1-.7-.7-2.1z" />,
   },
   {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireTenant, nextDueDate } from "@/lib/tenant";
 import { Card, Pill, fmtDate, moneyExact } from "@/components/ui";
+import { STATUS } from "@/lib/maintenance";
 
 export const metadata = { title: "Tenant portal" };
 
@@ -19,13 +20,15 @@ export default async function TenantHome() {
   }
 
   const active = leases.find((l) => l.status === "active");
-  const [{ data: toSign }, { data: openCharges }, { data: settings }] = active
+  const [{ data: toSign }, { data: openCharges }, { data: settings }, { data: repairs }] = active
     ? await Promise.all([
         supabase.from("lease_documents").select("id, title").eq("lease_id", active.id).eq("status", "sent"),
         supabase.from("rent_charges").select("id, due_date, amount_cents, late_fee_cents, paid_cents, description, payments(status)").eq("lease_id", active.id).in("status", ["due", "partial"]).order("due_date").limit(1),
         supabase.from("payment_settings").select("charges_enabled").eq("account_id", tenant.account_id).maybeSingle(),
+        supabase.from("maintenance_requests").select("id, title, status, scheduled_for").in("status", ["new", "scheduled", "in_progress"]).order("created_at", { ascending: false }).limit(3),
       ])
-    : [{ data: [] as { id: string; title: string }[] }, { data: [] }, { data: null }];
+    : [{ data: [] as { id: string; title: string }[] }, { data: [] }, { data: null }, { data: [] }];
+  const openRepairs = (repairs ?? []) as { id: string; title: string; status: string; scheduled_for: string | null }[];
 
   const nextCharge = openCharges?.[0];
   const owed = nextCharge ? nextCharge.amount_cents + nextCharge.late_fee_cents - nextCharge.paid_cents : 0;
@@ -85,6 +88,10 @@ export default async function TenantHome() {
       )}
 
       <div className="grid grid-cols-2 gap-3">
+        <Link href="/tenant/repairs/new" className="box-border min-h-[84px] p-4 rounded-[14px] bg-white border border-line flex flex-col justify-between gap-2 text-sm font-semibold">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0B6FD6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[22px] h-[22px]"><path d="M14.7 6.3a4 4 0 0 0-5.2 5.2L3 18l3 3 6.5-6.5a4 4 0 0 0 5.2-5.2l-2.6 2.6-2.1-.7-.7-2.1z" /></svg>
+          Request a repair
+        </Link>
         <Link href="/tenant/lease" className="box-border min-h-[84px] p-4 rounded-[14px] bg-white border border-line flex flex-col justify-between gap-2 text-sm font-semibold">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0B6FD6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[22px] h-[22px]"><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /><path d="M9 13h6M9 17h6" /></svg>
           Lease details
@@ -93,14 +100,34 @@ export default async function TenantHome() {
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0B6FD6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[22px] h-[22px]"><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M8.5 7.5h7M8.5 11.5h7M8.5 15.5h4" /></svg>
           Documents
         </Link>
+        <Link href="/tenant/repairs" className="box-border min-h-[84px] p-4 rounded-[14px] bg-white border border-line flex flex-col justify-between gap-2 text-sm font-semibold">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0B6FD6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-[22px] h-[22px]"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
+          My repairs{openRepairs.length ? ` (${openRepairs.length})` : ""}
+        </Link>
       </div>
 
-      <Card className="p-5 flex flex-col gap-3">
+      {openRepairs.length ? (
+        <Card>
+          <div className="px-5 pt-5 pb-2"><h2 className="text-[15px] font-semibold">Open repairs</h2></div>
+          <ul>
+            {openRepairs.map((r) => (
+              <li key={r.id}>
+                <Link href={`/tenant/repairs/${r.id}`} className="flex items-center justify-between gap-3 px-5 py-3.5 border-t border-line-2">
+                  <span className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[15px] font-semibold truncate">{r.title}</span>
+                    {r.status === "scheduled" && r.scheduled_for ? <span className="text-[13px] text-muted">Scheduled {fmtDate(r.scheduled_for)}</span> : null}
+                  </span>
+                  <Pill tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Pill>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+
+      <Card className="p-5 flex flex-col gap-1">
         <h2 className="text-[15px] font-semibold">Your landlord</h2>
         <p className="text-[15px] text-ink-2">{landlord}</p>
-        <div className="flex flex-wrap gap-2">
-          <Pill tone="gray">Repair requests coming soon</Pill>
-        </div>
       </Card>
 
       {active?.end_date ? (

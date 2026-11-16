@@ -157,11 +157,13 @@ export function Textarea({
   name,
   defaultValue,
   rows = 3,
+  placeholder,
 }: {
   label: string;
   name: string;
   defaultValue?: string | null;
   rows?: number;
+  placeholder?: string;
 }) {
   const id = `f-${name}`;
   return (
@@ -174,6 +176,7 @@ export function Textarea({
         name={name}
         rows={rows}
         defaultValue={defaultValue ?? undefined}
+        placeholder={placeholder}
         className="box-border w-full px-3.5 py-3 rounded-[10px] border border-field-strong bg-white text-ink text-base leading-snug resize-y focus:outline-2 focus:outline-spark focus:outline-offset-1"
       />
     </div>

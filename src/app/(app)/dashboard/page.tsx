@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { requireAccount } from "@/lib/data";
 import { Button, Card, Empty, PageHeader, Pill, fmtDate, money } from "@/components/ui";
+import { STATUS, URGENCY } from "@/lib/maintenance";
 
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const { supabase, account } = await requireAccount();
 
-  const [{ data: properties }, { data: units }, { data: tenants }, { data: leases }] = await Promise.all([
+  const [{ data: properties }, { data: units }, { data: tenants }, { data: leases }, { data: repairs }] = await Promise.all([
     supabase.from("properties").select("id, name").eq("account_id", account.id),
     supabase.from("units").select("id, label, property_id, market_rent_cents").eq("account_id", account.id),
     supabase.from("tenants").select("id").eq("account_id", account.id),
@@ -16,7 +17,16 @@ export default async function DashboardPage() {
       .select("id, unit_id, rent_cents, end_date, status, units(label, properties(name)), lease_tenants(tenants(full_name))")
       .eq("account_id", account.id)
       .eq("status", "active"),
+    supabase
+      .from("maintenance_requests")
+      .select("id, title, urgency, status, scheduled_for, created_at, units(label), properties(name)")
+      .eq("account_id", account.id)
+      .in("status", ["new", "scheduled", "in_progress"])
+      .order("created_at", { ascending: false }),
   ]);
+  type Repair = { id: string; title: string; urgency: string; status: string; scheduled_for: string | null; created_at: string; units: { label: string } | null; properties: { name: string } | null };
+  const rank = { emergency: 0, urgent: 1, routine: 2 } as Record<string, number>;
+  const openRepairs = ((repairs ?? []) as unknown as Repair[]).sort((a, b) => rank[a.urgency] - rank[b.urgency] || (a.created_at < b.created_at ? -1 : 1));
 
   const unitCount = units?.length ?? 0;
   const activeLeases = leases ?? [];
@@ -129,6 +139,31 @@ export default async function DashboardPage() {
                   </li>
                 );
               })}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="flex-[2_1_320px] min-w-0 px-7 py-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display font-semibold text-xl">Open repairs</h2>
+            <Link href="/maintenance" className="text-sm font-semibold text-link hover:text-link-dark">All</Link>
+          </div>
+          {openRepairs.length === 0 ? (
+            <p className="py-3 text-[15px] text-muted">Nothing open. Tenants can send requests from their portal.</p>
+          ) : (
+            <ul className="flex flex-col">
+              {openRepairs.slice(0, 5).map((r) => (
+                <li key={r.id}>
+                  <Link href={`/maintenance/${r.id}`} className="flex items-center justify-between gap-3 py-2.5 border-b border-line-2 last:border-0">
+                    <span className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-sm font-semibold truncate">{r.title}</span>
+                      <span className="text-[13px] text-muted">{r.properties?.name}{r.units ? `, ${r.units.label}` : ""}{r.status === "scheduled" && r.scheduled_for ? `. ${fmtDate(r.scheduled_for)}` : ""}</span>
+                    </span>
+                    {r.urgency !== "routine" ? <Pill tone={URGENCY[r.urgency].tone}>{URGENCY[r.urgency].label}</Pill> : <Pill tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Pill>}
+                  </Link>
+                </li>
+              ))}
+              {openRepairs.length > 5 ? <li className="pt-2 text-[13px] text-muted">and {openRepairs.length - 5} more</li> : null}
             </ul>
           )}
         </Card>
