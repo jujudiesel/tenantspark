@@ -1,6 +1,7 @@
 'use strict';
 
-const BASE = 'https://tenantspark.com';
+// TENANTSPARK_BASE lets the test suite point at a local server.
+const BASE = process.env.TENANTSPARK_BASE || 'https://tenantspark.com';
 
 // Zapier works best with flat fields. We keep the nested object too, but lift the useful bits.
 const flatten = (obj) => {

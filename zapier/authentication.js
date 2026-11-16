@@ -2,7 +2,7 @@
 
 // API key auth. The landlord makes a key under Settings, Integrations, and pastes it into Zapier.
 const test = async (z, bundle) => {
-  const res = await z.request({ url: `${bundle.authData.base_url || 'https://tenantspark.com'}/api/v1/me` });
+  const res = await z.request({ url: `${process.env.TENANTSPARK_BASE || 'https://tenantspark.com'}/api/v1/me` });
   return res.data.data;
 };
 
