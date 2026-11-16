@@ -155,8 +155,8 @@ export const CATEGORIES: Category[] = [
     title: "Build your own",
     blurb: "Everything above runs on the same public API and webhooks you can use directly.",
     items: [
-      { name: "REST API", blurb: "Properties, units, tenants, leases, charges, payments, repairs.", tag: "API", href: "/developers", color: "#0E1730" },
-      { name: "Webhooks", blurb: "Signed POSTs for 16 event types, with retries.", tag: "API", href: "/developers", color: "#0B6FD6" },
+      { name: "REST API", blurb: "Properties, units, tenants, leases, charges, payments, repairs, expenses.", tag: "API", href: "/developers", color: "#0E1730" },
+      { name: "Webhooks", blurb: "Signed POSTs for 19 event types, with retries.", tag: "API", href: "/developers", color: "#0B6FD6" },
       z("Zapier", "The quickest way to connect anything else."),
     ],
   },

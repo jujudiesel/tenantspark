@@ -53,3 +53,13 @@ begin
 end; $$;
 create trigger maintenance_notes_events after insert on public.maintenance_notes
   for each row execute function public.trg_note_events();
+
+-- Expense and income entries are events too (for Zapier and the books).
+create or replace function public.trg_expense_events()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  perform public.emit_event(new.account_id, 'expense.created', 'expense', new.id);
+  return null;
+end; $$;
+create trigger ledger_entries_events after insert on public.ledger_entries
+  for each row execute function public.trg_expense_events();

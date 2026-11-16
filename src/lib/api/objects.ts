@@ -18,6 +18,7 @@ export const SELECT = {
   repair:
     "id, title, description, location, urgency, status, permission_to_enter, assigned_to, scheduled_for, cost_cents, done_at, created_at, updated_at, tenants(id, full_name, email, phone), units(id, label), properties(id, name)",
   document: "id, title, status, sent_at, signed_at, created_at, leases(id, units(id, label, properties(id, name)), lease_tenants(is_primary, tenants(id, full_name, email)))",
+  expense: "id, kind, amount_cents, entry_date, vendor, memo, receipt_path, maintenance_request_id, created_at, categories(id, name), properties(id, name), units(id, label)",
 } as const;
 
 type Any = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -139,6 +140,20 @@ export const shape = {
     created_at: r.created_at,
     updated_at: r.updated_at,
   }),
+  expense: (e: Any) => ({
+    id: e.id,
+    kind: e.kind,
+    amount: dollars(e.amount_cents),
+    date: e.entry_date,
+    category: e.categories ? { id: e.categories.id, name: e.categories.name } : null,
+    vendor: e.vendor ?? null,
+    memo: e.memo ?? null,
+    has_receipt: Boolean(e.receipt_path),
+    repair_id: e.maintenance_request_id ?? null,
+    unit: unitOf(e.units),
+    property: propertyOf(e.properties),
+    created_at: e.created_at,
+  }),
   document: (d: Any) => ({
     id: d.id,
     title: d.title,
@@ -162,6 +177,7 @@ export const TABLE: Record<keyof typeof SELECT, string> = {
   payment: "payments",
   repair: "maintenance_requests",
   document: "lease_documents",
+  expense: "ledger_entries",
 };
 
 export type ObjectType = keyof typeof SELECT;
@@ -195,4 +211,5 @@ export const EVENT_TYPES: Record<string, { object: ObjectType; label: string; de
   "repair.done": { object: "repair", label: "Repair done", description: "A repair request was marked done or closed." },
   "repair.note": { object: "repair", label: "Landlord posted a repair update", description: "The landlord posted an update the tenant can see." },
   "repair.tenant_reply": { object: "repair", label: "Tenant replied on a repair", description: "The tenant added a comment to a repair request." },
+  "expense.created": { object: "expense", label: "Expense or income recorded", description: "A manual income or expense entry was added, or a repair cost became an expense." },
 };

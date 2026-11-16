@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import type { adminClient } from "@/lib/supabase/admin";
 import { EVENT_TYPES, loadObject } from "@/lib/api/objects";
 import { notifyForEvent } from "@/lib/reminders";
@@ -21,7 +21,7 @@ async function post(url: string, body: string, secret: string, type: string) {
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "User-Agent": "TenantSpark-Webhooks/1.0", "X-TenantSpark-Event": type, "X-TenantSpark-Signature": `sha256=${sig}` },
+      headers: { "Content-Type": "application/json", "User-Agent": "TenantSpark-Webhooks/1.0", "X-TenantSpark-Event": type, "X-TenantSpark-Signature": `sha256=${sig}`, "X-TenantSpark-Delivery": randomUUID() },
       body,
       signal: ctrl.signal,
     });
