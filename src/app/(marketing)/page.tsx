@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { AppWall, Check, Eyebrow, FAQ, FeatureRow, FinalCta, H2, PrimaryLink, SecondaryLink, Shot, Wrap } from "@/components/marketing/sections";
+import { Check, Eyebrow, FAQ, FeatureRow, FinalCta, H2, PrimaryLink, SecondaryLink, Shot, Wrap } from "@/components/marketing/sections";
+import { Honeycomb } from "@/components/marketing/honeycomb";
+import { PortfolioCards } from "@/components/marketing/portfolio-cards";
 
 export const metadata = {
   title: "TenantSpark: property management software for small landlords",
@@ -129,22 +131,9 @@ export default function HomePage() {
         </Wrap>
       </section>
 
-      {/* Integrations */}
-      <section>
-        <Wrap className="py-20 flex flex-wrap items-center gap-10 lg:gap-16">
-          <div className="flex-[1_1_360px] min-w-0 flex flex-col gap-4">
-            <Eyebrow>Integrations</Eyebrow>
-            <H2>Works with the tools you already use</H2>
-            <p className="text-[17px] leading-relaxed text-ink-2 max-w-[480px]">
-              Connect TenantSpark to Zapier once. When rent is paid, a lease is signed or a repair comes in, send it to QuickBooks, a spreadsheet, Slack, your email, or anything else.
-            </p>
-            <Link href="/features/integrations" className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-link hover:text-link-dark">See integrations <span aria-hidden="true">→</span></Link>
-          </div>
-          <div className="flex-[1_1_440px] min-w-0 bg-page border border-line rounded-2xl p-6 sm:p-8">
-            <AppWall />
-          </div>
-        </Wrap>
-      </section>
+      <PortfolioCards />
+
+      <Honeycomb />
 
       {/* Pricing teaser */}
       <section className="bg-page border-y border-line">
