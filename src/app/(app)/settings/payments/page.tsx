@@ -2,6 +2,7 @@ import { requireAccount } from "@/lib/data";
 import { stripeConfigured } from "@/lib/stripe";
 import { Button, Card, Field, Notice, PageHeader, Pill } from "@/components/ui";
 import { connectStripe, openStripeDashboard, refreshStripeStatus, savePaymentRules } from "./actions";
+import { SettingsTabs } from "@/components/settings-tabs";
 
 export const metadata = { title: "Payments setup" };
 
@@ -22,6 +23,7 @@ export default async function PaymentsSettingsPage({
   return (
     <>
       <PageHeader title="Payments setup" subtitle="Connect your bank so tenants can pay rent online." />
+      <SettingsTabs />
 
       {sp.return && !live ? (
         <form action={refreshStripeStatus}>

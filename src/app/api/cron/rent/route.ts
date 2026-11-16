@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { stripe, convenienceFee } from "@/lib/stripe";
 import { adminClient } from "@/lib/supabase/admin";
+import { sweepUndelivered } from "@/lib/api/deliver";
 
 export const maxDuration = 120;
 
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
 
   const { data: created } = await db.rpc("generate_rent_charges", { month_start: monthStart });
   const { data: lateFees } = await db.rpc("apply_late_fees", { today });
+  const { data: lateEvents } = await db.rpc("emit_late_rent_events", { today });
 
   // Autopay: charges due today or earlier, still owed, tenant has autopay with a saved method, no pending payment.
   const { data: due } = await db
@@ -95,5 +97,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ date: today, chargesCreated: created ?? 0, lateFeesApplied: lateFees ?? 0, autopaid, errors });
+  // Webhooks that never got through (app was down, endpoint timed out) get another try.
+  const webhooks = await sweepUndelivered(db);
+
+  return NextResponse.json({ date: today, chargesCreated: created ?? 0, lateFeesApplied: lateFees ?? 0, lateRentEvents: lateEvents ?? 0, autopaid, webhooks, errors });
 }
