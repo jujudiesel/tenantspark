@@ -57,7 +57,7 @@ export function Honeycomb() {
             <Eyebrow>One connection. All your tools.</Eyebrow>
             <h2 className="font-display font-semibold text-[40px] sm:text-[48px] leading-[1.06] tracking-[-0.4px]">Your work doesn&apos;t stop at TenantSpark</h2>
             <p className="text-[17px] leading-relaxed text-ink-2">Rent payments, repair requests and signed leases flow into QuickBooks, Google Sheets, Gmail, Slack and 8,000 other apps through Zapier. Set it up once in Settings.</p>
-            <Link href="/features/integrations" className="inline-flex items-center gap-1.5 text-[16px] font-semibold text-link hover:text-link-dark">See our integrations <span aria-hidden="true">→</span></Link>
+            <Link href="/integrations" className="inline-flex items-center gap-1.5 text-[16px] font-semibold text-link hover:text-link-dark">See our integrations <span aria-hidden="true">→</span></Link>
           </div>
           <Cluster items={RIGHT} />
         </div>
@@ -70,7 +70,7 @@ export function Honeycomb() {
           <div className="flex flex-wrap justify-center gap-2 max-w-[460px]" aria-hidden="true">
             {[...LEFT, ...RIGHT].map(([name]) => <Hex key={name} name={name} size={72} />)}
           </div>
-          <Link href="/features/integrations" className="inline-flex items-center gap-1.5 text-[16px] font-semibold text-link hover:text-link-dark">See our integrations <span aria-hidden="true">→</span></Link>
+          <Link href="/integrations" className="inline-flex items-center gap-1.5 text-[16px] font-semibold text-link hover:text-link-dark">See our integrations <span aria-hidden="true">→</span></Link>
         </div>
         <p className="sr-only">Connects with {Object.keys(I).join(", ")} and more.</p>
       </Wrap>

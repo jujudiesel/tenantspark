@@ -134,7 +134,7 @@ export const FEATURE_PAGES: Feature[] = [
     detail: {
       title: "Set up in Settings",
       body: "Make an API key, paste it into Zapier when it asks, and pick a trigger. Zapier handles the rest. You can see every connection and recent activity on the Integrations page.",
-      bullets: ["One key per tool, revoke any time", "Recent activity shows what your integrations can react to", "API docs at tenantspark.com/developers"],
+      bullets: ["One key per tool, revoke any time", "Recent activity shows what your integrations can react to", "Full list of apps at tenantspark.com/integrations"],
       shot: "/shots/integrations.png",
     },
     faq: [
