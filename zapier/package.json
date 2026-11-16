@@ -7,11 +7,10 @@
   "scripts": {
     "test": "node --test test/"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "zapier-platform-core": "19.3.0"
-  },
-  "devDependencies": {
-    "zapier-platform-cli": "19.3.0"
   }
 }

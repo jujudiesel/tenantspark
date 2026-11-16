@@ -8,8 +8,9 @@ Actions: create tenant, create repair request, record payment. Search: find tena
 
 ```
 cd zapier && npm install
-npx zapier-platform validate   # schema + publishing checks
-npx zapier-platform login      # once, with a deploy key from developer.zapier.com
-npx zapier-platform register "TenantSpark"   # first time only; writes .zapierapprc
-npx zapier-platform push
+npm install -g zapier-platform-cli@19.3.0   # keep the CLI outside this folder, or push fails with EMFILE
+zapier-platform validate   # schema + publishing checks
+zapier-platform login      # once, with a deploy key from developer.zapier.com
+zapier-platform register "TenantSpark"   # first time only; writes .zapierapprc
+zapier-platform push
 ```
