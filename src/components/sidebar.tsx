@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { BoltBadge, Wordmark } from "@/components/logo";
 import { logOut } from "@/app/(auth)/actions";
 
@@ -59,25 +60,60 @@ export function Sidebar({
   unitCount: number;
 }) {
   const path = usePathname();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [q, setQ] = useState("");
+  const router = useRouter();
+
+  // Cmd/Ctrl+K focuses search from anywhere in the app.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
-    <nav aria-label="Main" className="flex-[1_1_232px] max-w-full lg:max-w-[260px] bg-navy px-4 py-6 flex flex-col gap-7">
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 min-h-11" aria-label="TenantSpark dashboard">
-        <BoltBadge size={34} />
-        <Wordmark size={21} onDark />
+    <nav aria-label="Main" className="flex-[1_1_232px] max-w-full lg:max-w-[248px] bg-white border-b lg:border-b-0 lg:border-r border-line px-3.5 py-5 flex flex-col gap-5">
+      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 min-h-10" aria-label="TenantSpark dashboard">
+        <BoltBadge size={30} />
+        <Wordmark size={19} />
       </Link>
-      <div className="flex flex-row flex-wrap lg:flex-col gap-1">
+
+      <form
+        role="search"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`);
+        }}
+        className="relative"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        <input
+          ref={searchRef}
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search"
+          aria-label="Search tenants, properties, units and leases"
+          className="box-border w-full min-h-10 pl-9 pr-12 rounded-[9px] border border-line bg-page text-sm placeholder:text-muted focus:outline-2 focus:outline-spark focus:outline-offset-1 focus:bg-white"
+        />
+        <kbd aria-hidden="true" className="hidden lg:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-muted border border-line rounded px-1.5 py-0.5 bg-white">⌘K</kbd>
+      </form>
+
+      <div className="flex flex-row flex-wrap lg:flex-col gap-0.5">
         {items.map((it) => {
-          const active = path === it.href || path.startsWith(it.href + "/");
+          const active = path === it.href || path.startsWith(it.href.split("/").slice(0, 2).join("/") + "/") || path === it.href.split("/").slice(0, 2).join("/");
           if (it.soon) {
             return (
-              <span
-                key={it.href}
-                className="flex items-center gap-3 min-h-11 px-3 rounded-lg text-[15px] font-medium text-[#7E89A3] cursor-default"
-                title="Coming soon"
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-none">{it.icon}</svg>
+              <span key={it.href} className="flex items-center gap-3 min-h-10 px-3 rounded-[9px] text-[14px] font-medium text-muted/70 cursor-default" title="Coming soon">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] flex-none">{it.icon}</svg>
                 {it.label}
-                <span className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-[#7E89A3]">Soon</span>
+                <span className="ml-auto text-[10px] font-bold uppercase tracking-wide text-muted/70">Soon</span>
               </span>
             );
           }
@@ -86,25 +122,31 @@ export function Sidebar({
               key={it.href}
               href={it.href}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-3 min-h-11 px-3 rounded-lg text-[15px] ${
-                active ? "bg-navy-3 text-white font-semibold" : "text-[#C3CBDD] font-medium hover:bg-navy-2 hover:text-white"
+              className={`flex items-center gap-3 min-h-10 px-3 rounded-[9px] text-[14px] ${
+                active ? "bg-page text-ink font-semibold" : "text-ink-2 font-medium hover:bg-page/70 hover:text-ink"
               }`}
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke={active ? "#1492FF" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-none">{it.icon}</svg>
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke={active ? "#0B6FD6" : "currentColor"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] flex-none">{it.icon}</svg>
               {it.label}
             </Link>
           );
         })}
       </div>
-      <div className="mt-auto flex flex-col gap-2">
-        <div className="flex flex-col gap-0.5 px-3 py-3.5 rounded-[10px] bg-navy-2">
-          <span className="text-sm font-semibold text-white">{accountName}</span>
-          <span className="text-[13px] text-[#C3CBDD]">
-            {propertyCount} {propertyCount === 1 ? "property" : "properties"}, {unitCount} {unitCount === 1 ? "unit" : "units"}
+
+      <div className="mt-auto flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-1 pt-3 lg:pt-4 border-t border-line-2">
+        <div className="flex items-center gap-3 px-2 py-1 lg:py-2">
+          <span aria-hidden="true" className="w-8 h-8 rounded-full bg-navy text-white text-[13px] font-bold inline-flex items-center justify-center">
+            {accountName.trim().slice(0, 1).toUpperCase() || "T"}
+          </span>
+          <span className="flex flex-col min-w-0">
+            <span className="text-[13px] font-semibold truncate">{accountName}</span>
+            <span className="text-[12px] text-muted">
+              {propertyCount} {propertyCount === 1 ? "property" : "properties"}, {unitCount} {unitCount === 1 ? "unit" : "units"}
+            </span>
           </span>
         </div>
         <form action={logOut}>
-          <button type="submit" className="w-full text-left min-h-11 px-3 rounded-lg text-sm font-medium text-[#C3CBDD] hover:bg-navy-2 hover:text-white">
+          <button type="submit" className="w-full text-left min-h-9 whitespace-nowrap px-3 rounded-[9px] text-[13px] font-medium text-muted hover:bg-page hover:text-ink">
             Log out
           </button>
         </form>
