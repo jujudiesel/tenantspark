@@ -38,9 +38,13 @@ const items: { href: string; label: string; icon: React.ReactNode; soon?: boolea
     icon: <path d="M14.7 6.3a4 4 0 0 0-5.2 5.2L3 18l3 3 6.5-6.5a4 4 0 0 0 5.2-5.2l-2.6 2.6-2.1-.7-.7-2.1z" />,
   },
   {
+    href: "/accounting",
+    label: "Accounting",
+    icon: <><path d="M4 4h16v16H4z" /><path d="M8 9h8M8 13h8M8 17h5" /></>,
+  },
+  {
     href: "/reports",
     label: "Reports",
-    soon: true,
     icon: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
   },
   {

@@ -52,3 +52,9 @@ button {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+@media print {
+  nav[aria-label="Main"], .print\:hidden { display: none !important; }
+  main { padding: 0 !important; }
+  body { background: #fff; }
+}
