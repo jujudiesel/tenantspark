@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button, Field, Notice } from "@/components/ui";
 import { sendReset } from "../actions";
+import { emailConfigured } from "@/lib/notify";
 
 export const metadata = { title: "Reset your password" };
 
@@ -14,7 +15,7 @@ export default async function ForgotPage({
     <form action={sendReset} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
         <h1 className="font-display font-semibold text-[34px] leading-[1.1]">Reset your password</h1>
-        <p className="text-[15px] text-muted">We&apos;ll email you a link to set a new one.</p>
+        <p className="text-[15px] text-muted">We&apos;ll email you a link to set a new one.{emailConfigured() ? "" : " Open it on the same device you asked from."}</p>
       </div>
       {sent ? <Notice tone="success">If that email has an account, a reset link is on its way.</Notice> : null}
       {error ? <Notice tone="error">{error}</Notice> : null}

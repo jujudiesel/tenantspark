@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { str } from "@/lib/data";
 import { siteUrl } from "@/lib/site";
+import { adminClient } from "@/lib/supabase/admin";
+import { button, emailConfigured, para, sendEmail, wrapHtml } from "@/lib/notify";
 
 export async function signUp(formData: FormData) {
   const supabase = await createClient();
@@ -63,9 +65,27 @@ export async function sendReset(formData: FormData) {
   const supabase = await createClient();
   const email = str(formData.get("email"));
   if (!email) redirect(`/forgot?error=${encodeURIComponent("Enter your email.")}`);
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${await siteUrl()}/auth/callback?next=/reset`,
-  });
+  const base = await siteUrl();
+
+  // Preferred: a link that works from any device or browser, sent through our own mail.
+  // Supabase's own reset email only works in the browser that asked for it, which confuses people on phones.
+  if (process.env.SUPABASE_SECRET_KEY && emailConfigured()) {
+    const { data } = await adminClient().auth.admin.generateLink({ type: "recovery", email });
+    const token = data?.properties?.hashed_token;
+    if (token) {
+      const link = `${base}/auth/callback?token_hash=${encodeURIComponent(token)}&type=recovery&next=/reset`;
+      const subject = "Reset your TenantSpark password";
+      await sendEmail(email, {
+        subject,
+        text: `Someone asked to reset the password for this TenantSpark login. If that was you, open this link to pick a new one:\n\n${link}\n\nThe link works once and expires in an hour. If you didn't ask for this, you can ignore it.`,
+        html: wrapHtml(subject, para("Someone asked to reset the password for this TenantSpark login. If that was you, pick a new one here:") + button(link, "Set a new password") + para("The link works once and expires in an hour. If you didn't ask for this, you can ignore it."), "TenantSpark"),
+      });
+    }
+    // Same message whether or not the email exists, so nobody can probe for accounts.
+    redirect(`/forgot?sent=1`);
+  }
+
+  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${base}/auth/callback?next=/reset` });
   redirect(`/forgot?sent=1`);
 }
 

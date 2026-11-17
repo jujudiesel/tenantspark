@@ -35,7 +35,7 @@ export const para = (...lines: string[]) => lines.map((l) => `<p style="margin:0
 export const button = (href: string, label: string) =>
   `<p style="margin:18px 0 6px"><a href="${href}" style="display:inline-block;background:#0e1730;color:#fff;text-decoration:none;font-weight:600;padding:13px 22px;border-radius:10px">${esc(label)}</a></p>`;
 
-async function sendEmail(to: string, m: Message) {
+export async function sendEmail(to: string, m: Message) {
   if (!emailConfigured()) return { status: "skipped" as const, error: "email not configured" };
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
